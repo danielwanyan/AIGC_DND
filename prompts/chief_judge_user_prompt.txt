@@ -1,0 +1,24 @@
+# 商品介绍详细度评估 - 裁判 User Prompt
+# Description Detail Evaluation - Chief Judge User Prompt
+
+## 商品信息
+- 商品 ID: {{item_id}}
+- 视频 ID: {{aigc_video_id}}
+- 商品类目: {{product_category}}
+
+## 陪审员 A 输出
+{{juror_a_output}}
+
+## 陪审员 B 输出
+{{juror_b_output}}
+
+## 陪审员 C 输出
+{{juror_c_output}}
+
+## 裁判要求
+请按照 System Prompt 中的规则完成以下工作：
+1. 解析每个陪审员的最终结果和符合项数量
+2. 按照 2/3 多数投票原则做出最终判定
+3. 汇总 3 个陪审员的判定理由
+4. 严格按照 System Prompt 中的 JSON 格式输出结果
+5. 不需要重新评估 ASR 内容，只需要聚合陪审员的结果
