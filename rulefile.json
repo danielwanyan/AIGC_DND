@@ -1,0 +1,293 @@
+{
+  "workflow_name": "Description is not detailed (DND) Evaluation",
+  "version": "v1.0",
+  "version_date": "2026-06-01",
+  "architecture": "3 Jurors + 1 Chief Judge (IPP Standard)",
+  "github_repo": "https://github.com/danielwanyan/AIGC_DND",
+  "raw_base_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main",
+
+  "files": {
+    "reviewer_system_prompt": {
+      "path": "prompts/reviewer_system_prompt.txt",
+      "raw_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_system_prompt.txt",
+      "description": "Juror System Prompt with {{body}} placeholder for rules"
+    },
+    "reviewer_user_prompt": {
+      "path": "prompts/reviewer_user_prompt.txt",
+      "raw_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_user_prompt.txt",
+      "description": "Juror User Prompt"
+    },
+    "chief_judge_system_prompt": {
+      "path": "prompts/chief_judge_system_prompt.txt",
+      "raw_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/chief_judge_system_prompt.txt",
+      "description": "Chief Judge System Prompt for result aggregation"
+    },
+    "chief_judge_user_prompt": {
+      "path": "prompts/chief_judge_user_prompt.txt",
+      "raw_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/chief_judge_user_prompt.txt",
+      "description": "Chief Judge User Prompt"
+    },
+    "rules_text": {
+      "path": "rules/rules_text.txt",
+      "raw_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/rules/rules_text.txt",
+      "description": "Evaluation rules to be inserted into {{body}} placeholder"
+    },
+    "data_cleaning_node": {
+      "path": "nodes/data_cleaning_node.py",
+      "raw_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/nodes/data_cleaning_node.py",
+      "description": "Python FaaS code for data cleaning node"
+    },
+    "judge_node": {
+      "path": "nodes/judge_node.py",
+      "raw_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/nodes/judge_node.py",
+      "description": "Python FaaS code for chief judge node"
+    }
+  },
+
+  "workflow_config": {
+    "nodes": {
+      "start": {
+        "type": "start",
+        "inputs": [
+          {"name": "aigc_video_id", "type": "string"},
+          {"name": "item_id", "type": "string"}
+        ]
+      },
+      "rpc": {
+        "type": "rpc",
+        "service": "data_ecom.i18n_gov_arch.thunder_data_dict",
+        "method": "GetFeatureValue",
+        "feature_codes": [
+          "VideoMachineCheckInfo.asr",
+          "VideoMachineCheckInfo.merge_ocr",
+          "VideoMachineCheckInfo.product_images",
+          "VideoMachineCheckInfo.video_slice_list",
+          "VideoMachineCheckInfo.product_list"
+        ],
+        "access_code": "mt.closed_loop.gmv_max_diagnosis",
+        "env": "prod"
+      },
+      "data_cleaning": {
+        "type": "python_faas",
+        "code_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/nodes/data_cleaning_node.py",
+        "outputs": [
+          {"name": "Product_category", "type": "string"},
+          {"name": "ASR", "type": "string"},
+          {"name": "OCR", "type": "string"},
+          {"name": "Product_image", "type": "string"},
+          {"name": "URL_Frames", "type": "string"}
+        ]
+      },
+      "juror_a": {
+        "type": "llm",
+        "model": "GPT-5.1",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "timeout": 120,
+        "retry": 2,
+        "system_prompt_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_system_prompt.txt",
+        "user_prompt_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_user_prompt.txt",
+        "rules_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/rules/rules_text.txt",
+        "inputs": [
+          {"name": "item_id", "source": "start"},
+          {"name": "aigc_video_id", "source": "start"},
+          {"name": "ASR", "source": "data_cleaning"},
+          {"name": "Product_category", "source": "data_cleaning"},
+          {"name": "OCR", "source": "data_cleaning"},
+          {"name": "Product_image", "source": "data_cleaning"},
+          {"name": "URL_Frames", "source": "data_cleaning"}
+        ]
+      },
+      "juror_b": {
+        "type": "llm",
+        "model": "GPT-5.1",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "timeout": 120,
+        "retry": 2,
+        "parallel_with": ["juror_a", "juror_c"],
+        "system_prompt_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_system_prompt.txt",
+        "user_prompt_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_user_prompt.txt",
+        "rules_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/rules/rules_text.txt",
+        "inputs": [
+          {"name": "item_id", "source": "start"},
+          {"name": "aigc_video_id", "source": "start"},
+          {"name": "ASR", "source": "data_cleaning"},
+          {"name": "Product_category", "source": "data_cleaning"},
+          {"name": "OCR", "source": "data_cleaning"},
+          {"name": "Product_image", "source": "data_cleaning"},
+          {"name": "URL_Frames", "source": "data_cleaning"}
+        ]
+      },
+      "juror_c": {
+        "type": "llm",
+        "model": "GPT-5.1",
+        "temperature": 0,
+        "max_tokens": 2000,
+        "timeout": 120,
+        "retry": 2,
+        "parallel_with": ["juror_a", "juror_b"],
+        "system_prompt_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_system_prompt.txt",
+        "user_prompt_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/prompts/reviewer_user_prompt.txt",
+        "rules_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/rules/rules_text.txt",
+        "inputs": [
+          {"name": "item_id", "source": "start"},
+          {"name": "aigc_video_id", "source": "start"},
+          {"name": "ASR", "source": "data_cleaning"},
+          {"name": "Product_category", "source": "data_cleaning"},
+          {"name": "OCR", "source": "data_cleaning"},
+          {"name": "Product_image", "source": "data_cleaning"},
+          {"name": "URL_Frames", "source": "data_cleaning"}
+        ]
+      },
+      "judge": {
+        "type": "python_faas",
+        "code_url": "https://raw.githubusercontent.com/danielwanyan/AIGC_DND/main/nodes/judge_node.py",
+        "voting_rule": "majority_2_of_3",
+        "inputs": [
+          {"name": "juror_a_output", "source": "juror_a"},
+          {"name": "juror_b_output", "source": "juror_b"},
+          {"name": "juror_c_output", "source": "juror_c"},
+          {"name": "ASR", "source": "data_cleaning"},
+          {"name": "Product_category", "source": "data_cleaning"},
+          {"name": "item_id", "source": "start"},
+          {"name": "aigc_video_id", "source": "start"}
+        ],
+        "outputs": [
+          {"name": "final_result", "type": "string"},
+          {"name": "vote_ok", "type": "number"},
+          {"name": "vote_not_detailed", "type": "number"},
+          {"name": "juror_a_result", "type": "string"},
+          {"name": "juror_b_result", "type": "string"},
+          {"name": "juror_c_result", "type": "string"},
+          {"name": "match_count_avg", "type": "number"},
+          {"name": "reason_summary", "type": "string"},
+          {"name": "ASR", "type": "string"},
+          {"name": "Product_category", "type": "string"},
+          {"name": "item_id", "type": "string"},
+          {"name": "aigc_video_id", "type": "string"}
+        ]
+      },
+      "end": {
+        "type": "end",
+        "export_fields": [
+          "item_id",
+          "aigc_video_id",
+          "Product_category",
+          "ASR",
+          "final_result",
+          "vote_ok",
+          "vote_not_detailed",
+          "juror_a_result",
+          "juror_b_result",
+          "juror_c_result",
+          "match_count_avg",
+          "reason_summary"
+        ]
+      }
+    },
+    "connections": [
+      {"from": "start", "to": "rpc"},
+      {"from": "rpc", "to": "data_cleaning"},
+      {"from": "data_cleaning", "to": ["juror_a", "juror_b", "juror_c"]},
+      {"from": "juror_a", "to": "judge"},
+      {"from": "juror_b", "to": "judge"},
+      {"from": "juror_c", "to": "judge"},
+      {"from": "judge", "to": "end"}
+    ]
+  },
+
+  "evaluation_criteria": {
+    "pass_threshold": 2,
+    "categories": [
+      {
+        "id": "function",
+        "name": "功能/功效介绍",
+        "examples": ["支持主动降噪，降噪深度可达 40dB", "具有保湿功效，能够持续 24 小时锁水"]
+      },
+      {
+        "id": "feature",
+        "name": "特点/优势说明",
+        "examples": ["采用最新款 A17 处理器，性能提升 30%", "纯天然植物成分，无刺激"]
+      },
+      {
+        "id": "usage",
+        "name": "使用方法/适用场景",
+        "examples": ["每天早晚洁面后使用，取适量涂抹于面部", "适合运动时佩戴，防水防汗"]
+      },
+      {
+        "id": "spec",
+        "name": "参数/规格说明",
+        "examples": ["6.7 英寸 OLED 屏幕，分辨率 2796×1290", "5000mAh 大容量电池"]
+      },
+      {
+        "id": "material",
+        "name": "材质/成分介绍",
+        "examples": ["100% 纯棉材质，柔软透气", "含有维生素 C 和烟酰胺成分"]
+      }
+    ]
+  },
+
+  "anti_false_positive_rules": [
+    {
+      "id": "FP-01",
+      "name": "具体描述 vs 笼统描述",
+      "description": "只有具体描述才算符合，笼统描述（如'功能强大'）不算"
+    },
+    {
+      "id": "FP-02",
+      "name": "从严判定边界情况",
+      "description": "不确定或模棱两可的情况，一律判定为'无'"
+    },
+    {
+      "id": "FP-03",
+      "name": "证据引用必须准确",
+      "description": "引用的内容必须是 ASR 中真实存在的原文"
+    }
+  ],
+
+  "test_cases": [
+    {
+      "id": "TC01",
+      "name": "详细介绍（3:0 OK）",
+      "asr": "这款耳机支持主动降噪，降噪深度可达 40dB，采用最新款蓝牙 5.3 芯片，续航长达 30 小时，适合运动时佩戴，防水防汗。",
+      "expected_result": "✅ OK",
+      "expected_vote": "3:0"
+    },
+    {
+      "id": "TC02",
+      "name": "空洞词汇（0:3 不详细）",
+      "asr": "这款耳机真的很好用，推荐大家购买，性价比超高！",
+      "expected_result": "❌ Description is not detailed",
+      "expected_vote": "0:3"
+    },
+    {
+      "id": "TC03",
+      "name": "ASR 为空",
+      "asr": "",
+      "expected_result": "❌ Description is not detailed",
+      "expected_vote": "0:3"
+    },
+    {
+      "id": "TC04",
+      "name": "只有 1 项介绍",
+      "asr": "这款耳机采用蓝牙 5.3 芯片。",
+      "expected_result": "❌ Description is not detailed",
+      "expected_vote": "0:3 or 1:2"
+    },
+    {
+      "id": "TC05",
+      "name": "刚好 2 项介绍",
+      "asr": "这款耳机支持主动降噪，采用蓝牙 5.3 芯片。",
+      "expected_result": "✅ OK",
+      "expected_vote": "2:1 or 3:0"
+    }
+  ],
+
+  "platform_notes": {
+    "no_indentation": true,
+    "no_custom_types": true,
+    "image_json_string": true,
+    "number_types": ["vote_ok", "vote_not_detailed", "match_count_avg"]
+  }
+}
