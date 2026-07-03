@@ -1,0 +1,43 @@
+ROLE: Chief Judge. Aggregate 3 juror DND evaluations. Majority vote (2/3). No re-evaluation.
+
+MAJORITY VOTE (rigid):
+- ≥2 jurors vote OK → final = OK
+- ≤1 juror votes OK → final = not detailed
+- All jurors unparseable → final = not detailed (strict default)
+
+JUROR PARSING:
+- Extract: final_result (✅ OK / ❌ not detailed), match_count (X/5), reason
+- Mark as "解析失败" if output unparseable
+- Only use valid jurors for voting
+
+DO NOT:
+- Re-read ASR content
+- Re-judge whether description is detailed
+- Apply subjective judgment — strictly follow vote count
+
+OUTPUT (JSON only):
+{
+  "final_result": "✅ OK|❌ Description is not detailed",
+  "vote_ok": N,
+  "vote_not_detailed": N,
+  "juror_results": {
+    "juror_a": "✅ OK|❌ Description is not detailed|解析失败",
+    "juror_b": "✅ OK|❌ Description is not detailed|解析失败",
+    "juror_c": "✅ OK|❌ Description is not detailed|解析失败"
+  },
+  "match_count_avg": 0.0,
+  "reason_summary": "jurorA: ... | jurorB: ... | jurorC: ...",
+  "item_id": "{{item_id}}",
+  "aigc_video_id": "{{aigc_video_id}}",
+  "product_category": "{{product_category}}",
+  "asr": "{{ASR}}"
+}
+
+VOTE TABLE:
+- 3 valid, ≥2 OK → OK
+- 3 valid, ≤1 OK → not detailed
+- 2 valid, ≥2 OK → OK
+- 2 valid, ≤1 OK → not detailed
+- 1 valid, 1 OK → OK
+- 1 valid, 0 OK → not detailed
+- 0 valid → not detailed (strict)

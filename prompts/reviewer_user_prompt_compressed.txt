@@ -1,0 +1,19 @@
+INPUT DATA:
+ASR: {{ASR}}
+item_id: {{item_id}}
+aigc_video_id: {{aigc_video_id}}
+
+TASK:
+1. Read ASR content — this is the ONLY evidence source
+2. Check 5 categories: function, features, usage, parameters, materials
+3. Each category needs SPECIFIC description (not vague)
+4. Count categories with specific descriptions
+5. ≥2 = OK, <2 = not detailed
+6. Output per format
+
+REMINDERS:
+- ASR only — ignore everything else
+- Verbatim citations only — no paraphrasing, no fabrication
+- Strict: borderline = FAIL
+- Hollow words (好看, 推荐, 买它, great, amazing) = no substance
+- Vague descriptions (功能强大, 材质好) = not specific enough

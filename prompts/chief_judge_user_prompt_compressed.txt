@@ -1,0 +1,16 @@
+CONTEXT:
+item_id: {{item_id}}
+aigc_video_id: {{aigc_video_id}}
+product_category: {{product_category}}
+
+JUROR OUTPUTS:
+Juror A: {{juror_a_output}}
+Juror B: {{juror_b_output}}
+Juror C: {{juror_c_output}}
+
+TASK:
+1. Parse each juror's final_result and match_count
+2. Apply 2/3 majority vote
+3. Summarize reasons
+4. Output JSON per format
+5. Do NOT re-evaluate ASR — only aggregate

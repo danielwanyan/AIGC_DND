@@ -1,0 +1,36 @@
+DND Rules v1 (Compressed). Description Not Detailed — ASR-Based Evaluation.
+
+RULE: DND01 — Product description in ASR is not detailed enough. Applies to ALL categories.
+
+EVALUATION: ASR-ONLY. 5 categories, ≥2 with specific descriptions = OK.
+
+5 CATEGORIES (each needs SPECIFIC, not vague):
+1. Function/Efficacy: what it does (e.g., "supports ANC, 40dB depth")
+2. Features/Advantages: selling points (e.g., "A17 processor, 30% faster")
+3. Usage/Scenarios: how/when/who (e.g., "apply after cleansing, morning and evening")
+4. Parameters/Specs: dimensions, capacity (e.g., "6.7-inch OLED, 5000mAh battery")
+5. Materials/Ingredients: composition (e.g., "100% cotton, contains vitamin C")
+
+THRESHOLD: ≥2 categories with specific content = OK. <2 or vague only = NOT DETAILED.
+
+FAIL CONDITIONS (any one):
+- ASR empty or only filler sounds
+- Only product name, no description
+- Only hollow words: 好看, 推荐, 买它, 性价比高, great, amazing, buy it
+- <2 categories with specific descriptions
+- Content too vague: "功能强大" without saying what function, "材质好" without saying what material
+
+ANTI-FP RULES:
+FP-01: Specific vs Vague — "supports ANC" = specific (OK), "powerful functions" = vague (FAIL). Must describe WHAT specifically.
+FP-02: Borderline = FAIL — uncertain cases always judged as not detailed. Strict v1.0 screening.
+FP-03: Verbatim Citation — evidence must be exact ASR text, no paraphrasing, no fabrication.
+
+JUDGMENT FLOW:
+1. Check ASR → empty/filler/only hollow words = FAIL
+2. Check each of 5 categories for specific descriptions
+3. Count categories with specific descriptions
+4. ≥2 = OK, <2 = FAIL
+
+EXEMPTIONS: None in v1.0. All categories same standard. Reserved for future: simple goods, short videos, specific categories.
+
+FUTURE RESERVED (not active): simple goods exemption, specific category exemption, short video exemption.
